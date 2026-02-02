@@ -27,8 +27,13 @@ export async function handleCallback(req, res, next) {
     if (!code) {
       return res.status(400).json({ error: 'Falta el código de autorización (code)' });
     }
-    await exchangeCodeForTokens(code);
-    res.redirect('/api/auth/success');
+    const jwtTokenObject = await exchangeCodeForTokens(code);
+
+    res.status(200).json({
+      success: true,
+      message: 'Autenticación con Google completada. Tokens guardados.',
+      jwt: jwtTokenObject
+    });
   } catch (err) {
     next(err);
   }
