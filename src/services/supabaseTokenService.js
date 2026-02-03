@@ -40,3 +40,14 @@ export const getGoogleTokensByUserId = async (userId) => {
 
     return googleTokens;
 }
+
+export const getSpreadsheetIdByUserId = async (userId) => {
+    const { data: spreadsheetId, error: spreadsheetIdError } = await supabase
+        .from('user_google_tokens')
+        .select('spreadsheet_id')
+        .eq('user_id', userId);
+
+    if (spreadsheetIdError) throw spreadsheetIdError;
+
+    return spreadsheetId;
+}
