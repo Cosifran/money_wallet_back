@@ -45,13 +45,6 @@ export function getAuthUrl() {
 }
 
 /**
- * Guarda los tokens en tokens.json.
- */
-export function saveTokens(tokens) {
-  fs.writeFileSync(TOKENS_PATH, JSON.stringify(tokens, null, 2), 'utf8');
-}
-
-/**
  * Carga los tokens desde tokens.json. Devuelve null si no existen.
  */
 export function loadTokens() {
@@ -94,6 +87,17 @@ export async function exchangeCodeForTokens(code) {
   await saveGoogleTokens(authData, tokens);
 
   return getJwtTokenObject(authData);
+}
+
+export async function getGoogleTokensByUserId(userId) {
+  const { data: googleTokens, error: googleTokensError } = await supabase
+    .from('user_google_tokens')
+    .select('*')
+    .eq('user_id', userId);
+
+  if (googleTokensError) throw googleTokensError;
+
+  return googleTokens;
 }
 
 export { TOKENS_PATH, OAUTH_REDIRECT_URI };

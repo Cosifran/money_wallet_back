@@ -10,9 +10,9 @@ export const saveGoogleTokens = async (authData, tokens) => {
         .from('user_google_tokens')
         .upsert({
             user_id: supabaseUser.id, // El ID que nos dio Supabase
+            email: supabaseUser.email,
             access_token: tokens.access_token,
             refresh_token: tokens.refresh_token, // ¡ESTE ES EL QUE USA n8n!
-            spreadsheet_id: null, // Añadir más adelante
             expires_at: new Date(tokens.expiry_date).toISOString(),
             updated_at: new Date().toISOString()
         });
@@ -25,7 +25,18 @@ export const saveGoogleTokens = async (authData, tokens) => {
 
 export const getJwtTokenObject = async (authData) => {
     return {
-        user: authData.user,
         supabase_token: authData.session.access_token
     }
+}
+
+
+export const getGoogleTokensByUserId = async (userId) => {
+    const { data: googleTokens, error: googleTokensError } = await supabase
+        .from('user_google_tokens')
+        .select('*')
+        .eq('user_id', userId);
+
+    if (googleTokensError) throw googleTokensError;
+
+    return googleTokens;
 }

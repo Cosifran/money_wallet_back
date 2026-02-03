@@ -2,7 +2,7 @@ import sheetService from '../services/sheetService.js';
 
 const getTransactions = async (req, res) => {
     try {
-        const transactions = await sheetService.getAllTransactions();
+        const transactions = await sheetService.getAllTransactions( req.userId );
         res.status(200).json(transactions);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch transactions' });

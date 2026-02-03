@@ -1,19 +1,39 @@
+import { google } from 'googleapis';
 import { v4 as uuidv4 } from 'uuid';
 import { sheets } from '../config/googleSheets.js';
 import { dateToString } from '../utils/commons.js';
+// Import services
+// Import oauth2 service
+import {createOAuth2Client} from '../config/oauth2.js';
+// Import supabase token service
+import { getGoogleTokensByUserId } from '../services/supabaseTokenService.js';
 
-const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
-const SHEET_NAME = 'Hoja 1';
+const SHEET_NAME = 'Sheet1';
 const RANGE = `${SHEET_NAME}!A:H`;
 
 /**
  * Get all transactions from the sheet.
  * Assumes the first row is the header.
  */
-const getAllTransactions = async () => {
+const getAllTransactions = async (userId) => {
     try {
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId: SPREADSHEET_ID,
+        const googleTokens = await getGoogleTokensByUserId(userId);
+
+        if (!googleTokens) {
+            throw new Error('No se encontraron tokens de Google');
+        }
+        
+        const oauth2Client = createOAuth2Client();
+
+        oauth2Client.setCredentials({
+            access_token: googleTokens[0].access_token,
+            refresh_token: googleTokens[0].refresh_token,
+        });
+
+        const sheetsClient = google.sheets({ version: 'v4', auth: oauth2Client });
+
+        const response = await sheetsClient.spreadsheets.values.get({
+            spreadsheetId: googleTokens[0].spreadsheet_id,
             range: RANGE,
         });
 
