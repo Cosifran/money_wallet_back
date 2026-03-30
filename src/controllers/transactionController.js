@@ -2,7 +2,7 @@ import sheetService from '../services/sheetService.js';
 
 const getTransactions = async (req, res) => {
     try {
-        const transactions = await sheetService.getAllTransactions( req.userId );
+        const transactions = await sheetService.getAllTransactions(req.userId);
         res.status(200).json(transactions);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch transactions' });
@@ -11,7 +11,7 @@ const getTransactions = async (req, res) => {
 
 const createTransaction = async (req, res) => {
     try {
-        const newTransaction = await sheetService.createTransaction(req.body);
+        const newTransaction = await sheetService.createTransaction(req.userId, req.body);
         res.status(201).json(newTransaction);
     } catch (error) {
         res.status(500).json({ error: 'Failed to create transaction' });
@@ -21,7 +21,7 @@ const createTransaction = async (req, res) => {
 const updateTransaction = async (req, res) => {
     try {
         const { IdOriginal } = req.params;
-        const updatedTransaction = await sheetService.updateTransaction(IdOriginal, req.body);
+        const updatedTransaction = await sheetService.updateTransaction(IdOriginal, req);
         res.status(200).json(updatedTransaction);
     } catch (error) {
         if (error.message === 'Transaction not found') {
@@ -35,7 +35,7 @@ const updateTransaction = async (req, res) => {
 const deleteTransaction = async (req, res) => {
     try {
         const { IdOriginal } = req.params;
-        await sheetService.deleteTransaction(IdOriginal);
+        await sheetService.deleteTransaction(IdOriginal, req.userId);
         res.status(200).json({ message: 'Transaction deleted successfully' });
     } catch (error) {
         if (error.message === 'Transaction not found') {

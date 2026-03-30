@@ -1,4 +1,3 @@
-import { google } from 'googleapis';
 import { v4 as uuidv4 } from 'uuid';
 // Import google sheets client service
 import { getSheetsClientForUser } from '../config/googleSheets.js';
@@ -16,8 +15,8 @@ const RANGE = `${SHEET_NAME}!A:G`;
  */
 const getAllTransactions = async (userId) => {
     try {
-       const sheetsClient = await getSheetsClientForUser(userId);
-       const spreadsheetId = await getSpreadsheetIdByUserId(userId);
+        const sheetsClient = await getSheetsClientForUser(userId);
+        const spreadsheetId = await getSpreadsheetIdByUserId(userId);
 
         const response = await sheetsClient.spreadsheets.values.get({
             spreadsheetId: spreadsheetId[0].spreadsheet_id,
@@ -50,12 +49,15 @@ const getAllTransactions = async (userId) => {
  * Create a new transaction.
  * Generates a new IdOriginal.
  */
-const createTransaction = async (transactionData) => {
+const createTransaction = async (userId, transactionData) => {
+
     try {
+        const sheetsClient = await getSheetsClientForUser(userId);
+        const spreadsheetId = await getSpreadsheetIdByUserId(userId);
+
         const idOriginal = uuidv4();
         const fecha = dateToString(new Date());
         const newRow = [
-            idOriginal,
             idOriginal,
             fecha,
             transactionData.Asunto || '',
@@ -65,8 +67,8 @@ const createTransaction = async (transactionData) => {
             transactionData.Cantidad || '',
         ];
 
-        await sheets.spreadsheets.values.append({
-            spreadsheetId: SPREADSHEET_ID,
+        await sheetsClient.spreadsheets.values.append({
+            spreadsheetId: spreadsheetId[0].spreadsheet_id,
             range: RANGE,
             valueInputOption: 'USER_ENTERED',
             resource: {
@@ -84,11 +86,16 @@ const createTransaction = async (transactionData) => {
 /**
  * Update a transaction by IdOriginal.
  */
-const updateTransaction = async (idOriginal, updatedData) => {
+const updateTransaction = async (idOriginal, data) => {
     try {
+        const { userId, body: updatedData } = data;
+
+        const sheetsClient = await getSheetsClientForUser(userId);
+        const spreadsheetId = await getSpreadsheetIdByUserId(userId);
+
         // 1. Find the row index
-        const rowsResponse = await sheets.spreadsheets.values.get({
-            spreadsheetId: SPREADSHEET_ID,
+        const rowsResponse = await sheetsClient.spreadsheets.values.get({
+            spreadsheetId: spreadsheetId[0].spreadsheet_id,
             range: RANGE,
         });
 
@@ -113,24 +120,23 @@ const updateTransaction = async (idOriginal, updatedData) => {
         const existingRow = rows[rowIndex];
 
         // Construct updated row, preserving existing values if not provided in updatedData
-        // Columns: IdOriginal, Id, Fecha, Asunto, Tipo_de_transferencia, Tipo, Name, Cantidad
-        // Indices: 0, 1, 2, 3, 4, 5, 6, 7
+        // Columns: IdOriginal, Fecha, Asunto, Tipo_de_transferencia, Tipo, Name, Cantidad
+        // Indices: 0, 1, 2, 3, 4, 5, 6
 
         const updatedRow = [
             idOriginal, // IdOriginal should not change usually, but we keep it
-            updatedData.Id !== undefined ? updatedData.Id : existingRow[1],
-            updatedData.Fecha !== undefined ? updatedData.Fecha : existingRow[2],
-            updatedData.Asunto !== undefined ? updatedData.Asunto : existingRow[3],
-            updatedData.Tipo_de_transferencia !== undefined ? updatedData.Tipo_de_transferencia : existingRow[4],
-            updatedData.Tipo !== undefined ? updatedData.Tipo : existingRow[5],
-            updatedData.Name !== undefined ? updatedData.Name : existingRow[6],
-            updatedData.Cantidad !== undefined ? updatedData.Cantidad : existingRow[7],
+            updatedData.Fecha !== undefined ? updatedData.Fecha : existingRow[1],
+            updatedData.Asunto !== undefined ? updatedData.Asunto : existingRow[2],
+            updatedData.Tipo_de_transferencia !== undefined ? updatedData.Tipo_de_transferencia : existingRow[3],
+            updatedData.Tipo !== undefined ? updatedData.Tipo : existingRow[4],
+            updatedData.Name !== undefined ? updatedData.Name : existingRow[5],
+            updatedData.Cantidad !== undefined ? updatedData.Cantidad : existingRow[6],
         ];
 
         const updateRange = `${SHEET_NAME}!A${sheetRowNumber}:H${sheetRowNumber}`;
 
-        await sheets.spreadsheets.values.update({
-            spreadsheetId: SPREADSHEET_ID,
+        await sheetsClient.spreadsheets.values.update({
+            spreadsheetId: spreadsheetId[0].spreadsheet_id,
             range: updateRange,
             valueInputOption: 'USER_ENTERED',
             resource: {
@@ -149,11 +155,14 @@ const updateTransaction = async (idOriginal, updatedData) => {
 /**
  * Delete a transaction by IdOriginal.
  */
-const deleteTransaction = async (idOriginal) => {
+const deleteTransaction = async (idOriginal, userId) => {
     try {
+
+        const sheetsClient = await getSheetsClientForUser(userId);
+        const spreadsheetId = await getSpreadsheetIdByUserId(userId);
         // 1. Find the row index
-        const rowsResponse = await sheets.spreadsheets.values.get({
-            spreadsheetId: SPREADSHEET_ID,
+        const rowsResponse = await sheetsClient.spreadsheets.values.get({
+            spreadsheetId: spreadsheetId[0].spreadsheet_id,
             range: RANGE,
         });
 
@@ -173,12 +182,10 @@ const deleteTransaction = async (idOriginal) => {
         // The API expects startJson and endJson.
         // If we want to delete row 2 (index 1), start is 1, end is 2.
 
-        const sheetId = 0; // Assuming Sheet1 is the first sheet with ID 0. Ideally we should fetch sheet ID.
-
         // We need to fetch the sheetId for "Sheet1" to be safe, or assume 0 if it's the default first sheet.
         // Let's try to fetch it to be robust.
-        const spreadsheet = await sheets.spreadsheets.get({
-            spreadsheetId: SPREADSHEET_ID,
+        const spreadsheet = await sheetsClient.spreadsheets.get({
+            spreadsheetId: spreadsheetId[0].spreadsheet_id,
         });
 
         const sheet = spreadsheet.data.sheets.find(s => s.properties.title === SHEET_NAME);
@@ -187,8 +194,8 @@ const deleteTransaction = async (idOriginal) => {
         }
         const targetSheetId = sheet.properties.sheetId;
 
-        await sheets.spreadsheets.batchUpdate({
-            spreadsheetId: SPREADSHEET_ID,
+        await sheetsClient.spreadsheets.batchUpdate({
+            spreadsheetId: spreadsheetId[0].spreadsheet_id,
             resource: {
                 requests: [
                     {
