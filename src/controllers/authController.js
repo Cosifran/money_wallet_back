@@ -1,9 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_KEY
-);
+import { supabase } from '../config/supabaseClient.js';
 
 /**
  * Sign up a new user with email and password.

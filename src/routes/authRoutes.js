@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import {
-    signup,
-    login,
-    logout,
-    getMe,
-    refreshToken,
-    resetPassword,
-    updatePassword,
+  signup,
+  login,
+  logout,
+  getMe,
+  refreshToken,
+  resetPassword,
+  updatePassword,
 } from '../controllers/authController.js';
 
 const router = Router();
