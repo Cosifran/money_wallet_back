@@ -80,9 +80,66 @@ rm src/controllers/authController.js  # (if no other auth routes needed)
 rm src/routes/authRoutes.js            # (if no other auth routes needed)
 ```
 
-## API Response Format
+## API Endpoints
 
-The API response format remains the same for backwards compatibility:
+### Authentication (Supabase Email/Password)
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/auth/signup` | No | Register new user |
+| POST | `/api/auth/login` | No | Login, returns JWT |
+| POST | `/api/auth/logout` | JWT | Invalidate session |
+| GET | `/api/auth/me` | JWT | Get current user |
+| POST | `/api/auth/refresh` | No | Refresh access token |
+| POST | `/api/auth/reset-password` | No | Send reset email |
+| POST | `/api/auth/update-password` | JWT | Update password |
+
+### Transactions (JWT Required)
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/transacciones` | JWT | Get all transactions |
+| POST | `/api/transacciones` | JWT | Create transaction |
+| PUT | `/api/transacciones/:id` | JWT | Update transaction |
+| DELETE | `/api/transacciones/:id` | JWT | Delete transaction |
+
+### Example: Login Flow
+
+```bash
+# 1. Register (if new user)
+curl -X POST http://localhost:8080/api/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"secret123"}'
+
+# 2. Login
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"secret123"}'
+
+# Response:
+# {
+#   "success": true,
+#   "user": { "id": "...", "email": "user@example.com" },
+#   "session": {
+#     "access_token": "eyJ...",
+#     "refresh_token": "...",
+#     "expires_in": 3600
+#   }
+# }
+
+# 3. Use access_token for authenticated requests
+curl http://localhost:8080/api/transacciones \
+  -H "Authorization: Bearer eyJ..."
+```
+
+### Environment Variables Required
+
+```bash
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_KEY=your-service-role-key
+# Optional: for password reset redirect
+FRONTEND_URL=http://localhost:3000
+```
 
 ```json
 {
