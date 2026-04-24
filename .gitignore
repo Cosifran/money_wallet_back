@@ -4,3 +4,4 @@ google-credentials.json
 tokens.json*.json
 !package.json
 !package-lock.json
+wallet-automation.json
