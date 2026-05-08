@@ -4,6 +4,7 @@ import morgan from 'morgan';
 import transactionRoutes from './routes/transactionRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import testRoutes from './routes/testRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use('/api/transacciones', transactionRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/test', testRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

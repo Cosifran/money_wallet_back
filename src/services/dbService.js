@@ -137,4 +137,16 @@ const dbService = {
     },
 };
 
-export default dbService;
+
+const createNotification = async (userId, notificationData) => {
+    const { data, error } = await supabase
+        .from('notifications')
+        .insert([{ user_id: userId, body: notificationData.body, subjet: notificationData.subjet }])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export default { dbService, createNotification };

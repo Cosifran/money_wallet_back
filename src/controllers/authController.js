@@ -7,12 +7,12 @@ import { supabase } from '../config/supabaseClient.js';
  */
 export async function signup(req, res, next) {
     try {
-        const { email, password } = req.body;
+        const { email, password, name } = req.body;
 
-        if (!email || !password) {
+        if (!email || !password || !name) {
             return res.status(400).json({
                 success: false,
-                error: 'Email and password are required'
+                error: 'Email, password and name are required'
             });
         }
 
@@ -26,6 +26,11 @@ export async function signup(req, res, next) {
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
+            options: {
+                data: {
+                    display_name: name
+                }
+            }
         });
 
         if (error) {
@@ -40,6 +45,7 @@ export async function signup(req, res, next) {
             message: 'User created successfully. Check email for confirmation.',
             user: data.user ? {
                 id: data.user.id,
+                name: data.user.user_metadata.display_name,
                 email: data.user.email
             } : null,
             session: data.session
