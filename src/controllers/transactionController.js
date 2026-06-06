@@ -2,9 +2,11 @@ import dbService from '../services/dbService.js';
 
 const getTransactions = async (req, res) => {
     try {
+        console.log("req.userId", dbService);
         const transactions = await dbService.getAll(req.userId);
         res.status(200).json(transactions);
     } catch (error) {
+        console.error("Error al obtener transacciones:", error);
         res.status(500).json({ error: 'Failed to fetch transactions' });
     }
 };

@@ -5,3 +5,5 @@ tokens.json*.json
 !package.json
 !package-lock.json
 wallet-automation.json
+# Local Pi runtime state
+.atl/
