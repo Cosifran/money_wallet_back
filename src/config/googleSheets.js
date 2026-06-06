@@ -1,20 +1,22 @@
 import { google } from 'googleapis';
-import path from 'path';
-import dotenv from 'dotenv';
+import { createOAuth2Client } from './oauth2.js';
+import { getGoogleTokensByUserId } from '../services/supabaseTokenService.js';
 
-dotenv.config();
+export const getSheetsClientForUser = async (userId) => {
+  const googleTokens = await getGoogleTokensByUserId(userId);
 
-const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
-const CREDENTIALS_PATH = path.join(process.cwd(), 'google-credentials.json');
+  if (!googleTokens) {
+      throw new Error('No se encontraron tokens de Google');
+  }
+  
+  const oauth2Client = createOAuth2Client();
 
-const auth = new google.auth.GoogleAuth({
-  keyFile: CREDENTIALS_PATH,
-  scopes: SCOPES,
-});
+  oauth2Client.setCredentials({
+      access_token: googleTokens[0].access_token,
+      refresh_token: googleTokens[0].refresh_token,
+  });
 
-const sheets = google.sheets({ version: 'v4', auth });
+  const sheetsClient = google.sheets({ version: 'v4', auth: oauth2Client });
 
-export {
-  sheets,
-  auth,
-};
+  return sheetsClient;
+}

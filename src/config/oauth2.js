@@ -2,7 +2,8 @@ import { google } from 'googleapis';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
-import {supabase} from './supabaseClient.js';
+import { supabase } from './supabaseClient.js';
+import { saveGoogleTokens, getJwtTokenObject } from '../services/supabaseTokenService.js';
 
 dotenv.config();
 
@@ -41,13 +42,6 @@ export function getAuthUrl() {
     scope: SCOPES,
     prompt: 'consent', // Fuerza refresh token en el primer login
   });
-}
-
-/**
- * Guarda los tokens en tokens.json.
- */
-export function saveTokens(tokens) {
-  fs.writeFileSync(TOKENS_PATH, JSON.stringify(tokens, null, 2), 'utf8');
 }
 
 /**
@@ -90,26 +84,20 @@ export async function exchangeCodeForTokens(code) {
 
   if (authError) throw authError;
 
-const supabaseUser = authData.user;
+  await saveGoogleTokens(authData, tokens);
 
-const { error: dbError } = await supabase
-  .from('user_google_tokens')
-  .upsert({
-    user_id: supabaseUser.id, // El ID que nos dio Supabase
-    access_token: tokens.access_token,
-    refresh_token: tokens.refresh_token, // ¡ESTE ES EL QUE USA n8n!
-    spreadsheet_id: null, // Añadir más adelante
-    expires_at: new Date(tokens.expiry_date).toISOString(),
-    updated_at: new Date().toISOString()
-  });
+  return getJwtTokenObject(authData);
+}
 
-  if (dbError) {
-    console.error("Error al guardar en la tabla:", dbError.message);
-    throw dbError;
-  }
+export async function getGoogleTokensByUserId(userId) {
+  const { data: googleTokens, error: googleTokensError } = await supabase
+    .from('user_google_tokens')
+    .select('*')
+    .eq('user_id', userId);
 
-/*   saveTokens(tokens);
-  return tokens; */
+  if (googleTokensError) throw googleTokensError;
+
+  return googleTokens;
 }
 
 export { TOKENS_PATH, OAUTH_REDIRECT_URI };
