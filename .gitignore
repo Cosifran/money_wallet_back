@@ -2,3 +2,5 @@
 node_modules
 google-credentials.json
 tokens.json
+.atl
+.cursor
